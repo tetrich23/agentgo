@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call Center - Zgłoszenia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f8f6ec; padding: 20px; }
+    h2 { color: #1e3615; }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+    }
+    .card small { color: #555; display: block; margin-bottom: 4px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h2>Zrealizowane zgłoszenia</h2>
+  <div id="reportList"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+      authDomain: "mesi-a81c4.firebaseapp.com",
+      projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.appspot.com",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loadReports() {
+      const container = document.getElementById("reportList");
+      const snapshot = await db.collection("tasks").where("status", "==", "Zrealizowane").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <strong>${data.address}</strong>
+          <small>Klient: ${data.name}, tel: ${data.phone}</small>
+          <small>Agent: ${data.agent || "brak"}</small>
+          <small>Umowa podpisana: ${data.umowa}</small>
+          <small>Komentarz: ${data.komentarz}</small>
+          <small>Data: ${data.dataRealizacji?.toDate?.().toLocaleString() || "brak"}</small>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>
