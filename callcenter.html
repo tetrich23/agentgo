@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f8f6ec;
+    }
+    header {
+      background-color: #1e3615;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    header img {
+      height: 40px;
+      margin-top: 5px;
+    }
+    main {
+      padding: 20px;
+    }
+    input, textarea {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #384c2e;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="Logo" />
+    <h2>NASZ PRĄD S.A.</h2>
+  </header>
+  <main>
+    <h3>Dodaj klienta</h3>
+    <form id="taskForm">
+      <input id="name" placeholder="Imię i nazwisko" required />
+      <input id="address" placeholder="Adres" required />
+      <input id="phone" placeholder="Telefon" required />
+      <textarea id="description" placeholder="Opis" required></textarea>
+      <button type="submit">Dodaj zgłoszenie</button>
+    </form>
+  </main>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+      authDomain: "mesi-a81c4.firebaseapp.com",
+      projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.appspot.com",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6",
+      measurementId: "G-JPLD8X2C53"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("taskForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const task = {
+        name: document.getElementById("name").value,
+        address: document.getElementById("address").value,
+        phone: document.getElementById("phone").value,
+        description: document.getElementById("description").value,
+        status: "Dostępne",
+        timestamp: new Date()
+      };
+      try {
+        await db.collection("tasks").add(task);
+        alert("Zgłoszenie dodane!");
+        document.getElementById("taskForm").reset();
+      } catch (err) {
+        alert("Błąd dodawania zgłoszenia: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
