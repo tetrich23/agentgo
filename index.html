@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logowanie – Nasz Prąd</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f7ef;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
+    header {
+      background-color: #1e3515;
+      padding: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    header img {
+      max-height: 50px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #3f582d;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      width: 100%;
+      font-size: 16px;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+      authDomain: "mesi-a81c4.firebaseapp.com",
+      projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.firebasestorage.app",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6",
+      measurementId: "G-JPLD8X2C53"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("loginForm");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = form.userid.value.trim();
+        const kod = form.code.value.trim();
+
+        try {
+          const userDoc = await getDoc(doc(db, "users", id));
+          if (!userDoc.exists()) {
+            alert("❌ Nie znaleziono użytkownika.");
+            return;
+          }
+
+          const data = userDoc.data();
+          if (data.kod !== kod) {
+            alert("❌ Niepoprawny kod.");
+            return;
+          }
+
+          if (data.rola === "agent") {
+            window.location.href = "agent.html";
+          } else if (data.rola === "callcenter") {
+            window.location.href = "callcenter.html";
+          } else {
+            alert("❌ Nieznana rola: " + data.rola);
+          }
+
+        } catch (err) {
+          alert("Błąd podczas logowania: " + err.message);
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="Logo Nasz Prąd" />
+  </header>
+  <form id="loginForm">
+    <input type="text" name="userid" placeholder="Numer użytkownika" required />
+    <input type="password" name="code" placeholder="Kod dostępu" required />
+    <button type="submit">Zaloguj się</button>
+  </form>
+</body>
+</html>
