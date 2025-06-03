@@ -1,0 +1,41 @@
+
+<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Call Center Historia</title>
+<style>
+body{font-family:Arial;background:#f8f6ec;padding:20px}
+.card{background:white;border-radius:10px;padding:15px;margin-bottom:10px;box-shadow:0 0 4px rgba(0,0,0,0.1)}
+</style>
+<script src='https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js'></script>
+<script src='https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js'></script>
+</head><body>
+<h2>Historia zleceń</h2><div id='lista'></div>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+  authDomain: "mesi-a81c4.firebaseapp.com",
+  projectId: "mesi-a81c4",
+  storageBucket: "mesi-a81c4.appspot.com",
+  messagingSenderId: "291235707667",
+  appId: "1:291235707667:web:66d7f1e079321c5306f8e6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+async function load() {
+  const l=document.getElementById("lista");
+  const s=await db.collection("tasks").where("status","==","Zrealizowane").get();
+  l.innerHTML="";
+  s.forEach(doc=>{
+    const d=doc.data();
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+    <b>${d.ulica || ""}, ${d.kod || ""} ${d.miasto || ""}</b><br/>
+    📞 ${d.name || ""}, tel: ${d.phone || ""}<br/>
+    👤 Agent: ${d.agent}<br/>
+    ✅ Umowa: ${d.umowa}<br/>
+    💬 ${d.komentarz}<br/>
+    🕒 ${new Date(d.zakonczono?.seconds * 1000 || "").toLocaleString("pl-PL")}`;
+    l.appendChild(div);
+  });
+}
+load();
+</script></body></html>
