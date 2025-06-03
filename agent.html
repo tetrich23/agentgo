@@ -71,7 +71,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const agentId = "agent001";
+    const agentId = localStorage.getItem("user") || "brak";
 
     async function loadTasks() {
       const list = document.getElementById("taskList");
