@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Agent – Historia Zleceń</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #f8f6ec; }
+    header { background-color: #1e3615; color: white; padding: 10px; text-align: center; }
+    header img { height: 40px; margin-top: 5px; }
+    main { padding: 20px; }
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .card h4 { margin: 0; font-size: 18px; }
+    .card small { display: block; margin: 4px 0 8px; color: #666; }
+    button {
+      background-color: #c77b2b;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    textarea, select {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    h3 { margin-top: 40px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="Logo" />
+    <h2>NASZ PRĄD S.A.</h2>
+  </header>
+  <main>
+    <h3>Dostępni klienci</h3>
+    <div id="taskList"></div>
+
+    <h3>Moje aktualne zlecenia</h3>
+    <div id="agentTasks"></div>
+
+    <h3>Historia moich zgłoszeń</h3>
+    <div id="agentHistory"></div>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+      authDomain: "mesi-a81c4.firebaseapp.com",
+      projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.appspot.com",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const agentId = "agent001";
+
+    async function loadTasks() {
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      const snapshot = await db.collection("tasks").where("status", "==", "Dostępne").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h4>${data.ulica || "Brak ulicy"}, ${data.kod || ""} ${data.miasto || ""}</h4>
+          <small>${data.name}</small>
+          <small>${data.phone}</small>
+          <button onclick="acceptTask('${doc.id}')">Przejmuję</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function acceptTask(id) {
+      await db.collection("tasks").doc(id).update({
+        status: "W realizacji",
+        agent: agentId
+      });
+      loadTasks();
+      loadAgentTasks();
+    }
+
+    async function loadAgentTasks() {
+      const list = document.getElementById("agentTasks");
+      list.innerHTML = "";
+      const snapshot = await db.collection("tasks")
+        .where("status", "==", "W realizacji")
+        .where("agent", "==", agentId)
+        .get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h4>${data.ulica || ""}, ${data.kod || ""} ${data.miasto || ""}</h4>
+          <small>${data.name}</small>
+          <small>${data.phone}</small>
+          <label>Umowa podpisana:</label>
+          <select id="umowa-${doc.id}">
+            <option value="tak">Tak</option>
+            <option value="nie">Nie</option>
+          </select>
+          <textarea id="komentarz-${doc.id}" placeholder="Komentarz"></textarea>
+          <button onclick="submitRaport('${doc.id}')">Zapisz raport</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function submitRaport(id) {
+      const komentarz = document.getElementById("komentarz-" + id).value;
+      const umowa = document.getElementById("umowa-" + id).value;
+      await db.collection("tasks").doc(id).update({
+        status: "Zrealizowane",
+        komentarz,
+        umowa,
+        dataRealizacji: new Date()
+      });
+      loadAgentTasks();
+      loadAgentHistory();
+    }
+
+    async function loadAgentHistory() {
+      const list = document.getElementById("agentHistory");
+      list.innerHTML = "";
+      const snapshot = await db.collection("tasks")
+        .where("status", "==", "Zrealizowane")
+        .where("agent", "==", agentId)
+        .get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h4>${data.ulica || ""}, ${data.kod || ""} ${data.miasto || ""}</h4>
+          <small>${data.name}</small>
+          <small>${data.phone}</small>
+          <small>Umowa: ${data.umowa}</small>
+          <small>Komentarz: ${data.komentarz}</small>
+          <small>Data: ${data.dataRealizacji?.toDate().toLocaleString("pl-PL")}</small>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    loadTasks();
+    loadAgentTasks();
+    loadAgentHistory();
+  </script>
+</body>
+</html>
