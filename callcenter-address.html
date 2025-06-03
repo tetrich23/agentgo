@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call Center – Nasz Prąd</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f8f6ec; margin: 0; }
+    header {
+      background-color: #1e3615;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    header img { height: 40px; }
+    main { padding: 20px; }
+    form {
+      background-color: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #384c2e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      width: 100%;
+      font-size: 16px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+    }
+    .card small { color: #555; display: block; margin-bottom: 4px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="Logo" />
+    <h2>NASZ PRĄD S.A. – Call Center</h2>
+  </header>
+  <main>
+    <form id="taskForm">
+      <h3>➕ Dodaj klienta</h3>
+      <input id="name" placeholder="Imię i nazwisko" required />
+      <input id="city" placeholder="Miasto" required />
+      <input id="street" placeholder="Ulica i numer" required />
+      <input id="postal" placeholder="Kod pocztowy" required />
+      <input id="phone" placeholder="Telefon" required />
+      <textarea id="description" placeholder="Opis" required></textarea>
+      <button type="submit">Dodaj zgłoszenie</button>
+    </form>
+
+    <section id="reportSection">
+      <h3>📋 Zrealizowane zgłoszenia</h3>
+      <div id="reportList"></div>
+    </section>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+      authDomain: "mesi-a81c4.firebaseapp.com",
+      projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.appspot.com",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.getElementById("taskForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const task = {
+        name: document.getElementById("name").value,
+        miasto: document.getElementById("city").value,
+        ulica: document.getElementById("street").value,
+        kod: document.getElementById("postal").value,
+        phone: document.getElementById("phone").value,
+        description: document.getElementById("description").value,
+        status: "Dostępne",
+        timestamp: new Date()
+      };
+      try {
+        await db.collection("tasks").add(task);
+        alert("✅ Zgłoszenie dodane!");
+        e.target.reset();
+        loadReports();
+      } catch (err) {
+        alert("Błąd dodawania zgłoszenia: " + err.message);
+      }
+    });
+
+    function formatDate(timestamp) {
+      if (!timestamp || !timestamp.toDate) return "brak";
+      const date = timestamp.toDate();
+      return date.toLocaleString("pl-PL");
+    }
+
+    async function loadReports() {
+      const container = document.getElementById("reportList");
+      container.innerHTML = "";
+      const snapshot = await db.collection("tasks").where("status", "==", "Zrealizowane").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <strong>${data.ulica || "-"}, ${data.kod || "-"} ${data.miasto || "-"}</strong>
+          <small>📞 ${data.name || "-"}, tel: ${data.phone || "-"}</small>
+          <small>👷 Agent: ${data.agent || "-"}</small>
+          <small>✅ Umowa: ${data.umowa || "-"}</small>
+          <small>💬 Komentarz: ${data.komentarz || "-"}</small>
+          <small>📅 Realizacja: ${formatDate(data.dataRealizacji)}</small>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    loadReports();
+  </script>
+</body>
+</html>
