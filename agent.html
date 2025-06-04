@@ -160,7 +160,7 @@
         div.innerHTML = `<b>${t.ulica || "-"}, ${t.kod || ""} ${t.miasto || ""}</b><br />
           👤 ${t.name}, tel: ${t.phone}<br />`;
 
-        if (t.status === "Nowe") {
+        if (t.status === "Dostępne") {
           const btn = document.createElement("button");
           btn.innerText = "Przejmuję";
           btn.onclick = () => przejmij(doc.id);
