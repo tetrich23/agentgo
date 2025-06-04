@@ -1,76 +1,153 @@
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Agenta</title>
+  <meta charset="UTF-8" />
+  <title>Agent – NASZ PRĄD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      background: #f8f6ec;
-      font-family: Arial, sans-serif;
-      margin: 0;
+    body { font-family: Arial; background: #f8f6ec; padding: 20px; }
+    .card {
+      background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    header {
-      background-color: #1e3615;
-      color: white;
-      text-align: center;
-      padding: 20px;
-      font-weight: bold;
+    button {
+      background: #336633; color: white; border: none; padding: 10px 15px;
+      border-radius: 8px; cursor: pointer; margin-top: 10px;
     }
-    main {
-      padding: 20px;
-    }
-    .task {
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .top-bar span { font-weight: bold; color: #1e3615; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <header>Panel agenta</header>
-  <main>
-    <h3>Dostępne zgłoszenia</h3>
-    <div id="taskList"></div>
-  </main>
+  <div class="top-bar">
+    <span id="agentLabel">Zalogowany jako: brak</span>
+    <button onclick="zmienAgenta()">Zmień agenta</button>
+  </div>
+
+  <h3>Dostępne zgłoszenia</h3>
+  <div id="taskList"></div>
+
+  <h3>Moje zrealizowane zgłoszenia</h3>
+  <div id="historyList"></div>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
       authDomain: "mesi-a81c4.firebaseapp.com",
       projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.appspot.com",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    async function loadTasks() {
-      const list = document.getElementById("taskList");
-      list.innerHTML = "";
+    let agentId = localStorage.getItem("agentId");
 
-      const querySnapshot = await db.collection("tasks")
-        .where("status", "==", "Nowe")
-        .get();
+    async function logowanie() {
+      const login = prompt("Wpisz swój identyfikator agenta (np. agent001):");
+      const haslo = prompt("Wpisz swoje hasło:");
 
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement("div");
-        div.className = "task";
-        div.innerHTML = `
-          <strong>${data.name}</strong><br>
-          📞 ${data.phone}<br>
-          📍 ${data.ulica}, ${data.kod} ${data.miasto}<br>
-          📝 ${data.description || ''}<br>
-        `;
-        list.appendChild(div);
-      });
+      if (!login || !haslo) {
+        alert("Login i hasło są wymagane.");
+        return false;
+      }
+
+      try {
+        const doc = await db.collection("users").doc(login).get();
+        if (!doc.exists || doc.data().haslo !== haslo) {
+          alert("Nieprawidłowy login lub hasło.");
+          return false;
+        }
+        localStorage.setItem("agentId", login);
+        agentId = login;
+        document.getElementById("agentLabel").textContent = "Zalogowany jako: " + agentId;
+        return true;
+      } catch (err) {
+        alert("Błąd logowania.");
+        console.error(err);
+        return false;
+      }
     }
 
-    loadTasks();
+    async function zmienAgenta() {
+      localStorage.removeItem("agentId");
+      const ok = await logowanie();
+      if (ok) load();
+    }
+
+    window.onload = async () => {
+      if (!agentId) {
+        const ok = await logowanie();
+        if (!ok) return;
+      } else {
+        document.getElementById("agentLabel").textContent = "Zalogowany jako: " + agentId;
+        load();
+      }
+    };
+
+    async function load() {
+      const taskList = document.getElementById("taskList");
+      const historyList = document.getElementById("historyList");
+      taskList.innerHTML = "";
+      historyList.innerHTML = "";
+
+      const snapshot = await db.collection("tasks").get();
+      const historyItems = [];
+
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement("div");
+        div.className = "card";
+
+        const addr = `${d.ulica || ""}, ${d.kod || ""} ${d.miasto || ""}`;
+        const content = `<b>${addr}</b><br/>📞 ${d.name}, tel: ${d.phone}`;
+
+        if (d.status === "Zrealizowane" && d.agent === agentId) {
+          div.innerHTML = content + `
+            <br/>🧍 Agent: ${d.agent || "-"}
+            <br/>✅ Umowa: ${d.umowa || "-"}
+            <br/>💬 ${d.komentarz || "-"}
+            <br/>🕒 ${new Date(d.zakonczono?.seconds * 1000 || "").toLocaleString("pl-PL")}
+          `;
+          historyItems.push({ date: d.zakonczono?.seconds || 0, div });
+        } else if (d.status === "Dostępne") {
+          div.innerHTML = content;
+          const btn = document.createElement("button");
+          btn.innerText = "Przejmuję";
+          btn.onclick = async () => {
+            const komentarz = prompt("Komentarz:");
+            let umowa = prompt("Czy umowa została podpisana? Wpisz: tak / nie / inne");
+            if (!["tak", "nie", "inne"].includes(umowa)) {
+              alert("Nieprawidłowa wartość. Wpisz: tak, nie lub inne.");
+              return;
+            }
+            let powod = "";
+            if (umowa === "inne") {
+              powod = prompt("Podaj powód (dlaczego 'inne'):");
+              umowa = "inne: " + (powod || "nie podano");
+            }
+            await db.collection("tasks").doc(doc.id).update({
+              status: "Zrealizowane",
+              agent: agentId,
+              komentarz: komentarz || "",
+              umowa: umowa,
+              zakonczono: new Date()
+            });
+            load();
+          };
+          div.appendChild(btn);
+          taskList.appendChild(div);
+        }
+      });
+
+      historyItems.sort((a, b) => b.date - a.date).forEach(item => {
+        historyList.appendChild(item.div);
+      });
+    }
   </script>
 </body>
 </html>
