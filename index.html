@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logowanie - NASZ PRĄD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #f8f6ec;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    header {
+      background-color: #1e3615;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      height: 40px;
+    }
+    main {
+      max-width: 400px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    input {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      background-color: #336633;
+      color: white;
+      font-size: 16px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2a552a;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="Logo" />
+    <h2>Zaloguj się - NASZ PRĄD</h2>
+  </header>
+  <main>
+    <input type="text" id="login" placeholder="Numer użytkownika (np. agent002)" required />
+    <input type="password" id="kod" placeholder="Kod dostępu" required />
+    <button onclick="zaloguj()">Zaloguj</button>
+    <p id="komunikat" class="error"></p>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function zaloguj() {
+      const login = document.getElementById("login").value;
+      const kod = document.getElementById("kod").value;
+      const komunikat = document.getElementById("komunikat");
+      try {
+        const doc = await db.collection("users").doc(login).get();
+        if (doc.exists && doc.data().kod === kod) {
+          localStorage.setItem("userId", login);
+          const rola = doc.data().rola;
+          window.location.href = rola === "agent" ? "agent.html" : "callcenter.html";
+        } else {
+          komunikat.textContent = "Nieprawidłowy login lub hasło.";
+        }
+      } catch (e) {
+        komunikat.textContent = "Błąd logowania.";
+      }
+    }
+  </script>
+</body>
+</html>
