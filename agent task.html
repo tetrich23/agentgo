@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel agenta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { background: #f8f6ec; font-family: Arial; margin: 0; padding: 20px; }
+    h3 { margin-top: 30px; }
+    .card {
+      background: white; padding: 15px; margin-bottom: 15px;
+      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    button {
+      background-color: #336633; color: white; border: none;
+      padding: 10px 15px; border-radius: 6px; cursor: pointer;
+      margin-top: 10px;
+    }
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%;
+      height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px;
+    }
+    input, select, textarea {
+      width: 100%; padding: 10px; margin-bottom: 12px;
+      border-radius: 6px; border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h2>Panel agenta – <span id="agentLabel"></span></h2>
+    <button onclick="wyloguj()">Zmień agenta</button>
+  </div>
+
+  <h3>Dostępne zgłoszenia</h3>
+  <div id="dostepne"></div>
+
+  <h3>Moje zgłoszenia w toku</h3>
+  <div id="wtrakcie"></div>
+
+  <h3>Moje zrealizowane zgłoszenia</h3>
+  <div id="zrealizowane"></div>
+
+  <div class="modal" id="formularzModal">
+    <div class="modal-content">
+      <h3>Uzupełnij raport</h3>
+      <form id="formularzRaport">
+        <label>Czy umowa podpisana?</label>
+        <select id="umowa">
+          <option value="tak">Tak</option>
+          <option value="nie">Nie</option>
+          <option value="inne">Inne</
