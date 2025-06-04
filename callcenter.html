@@ -158,11 +158,20 @@
         const d = doc.data();
         const div = document.createElement("div");
         div.className = "task";
-        div.innerHTML = `
-          <div><strong>${d.miasto}, ${d.ulica}</strong></div>
-          <div>📅 ${d.data || "-"}</div>
-          <div>☎️ ${d.phone || "-"}</div>
-          <div>👤 Dodane przez: ${d.utworzonyPrzez || "?"}</div>
+div.innerHTML = `
+  <div><strong>${d.miasto}, ${d.ulica}</strong></div>
+  <div>📅 ${d.data || "-"}</div>
+  <div>☎️ ${d.phone || "-"}</div>
+  <div>👤 Dodane przez: ${d.utworzonyPrzez || "?"}</div>
+  ${d.raport ? `
+    <hr />
+    <div><strong>Raport agenta:</strong></div>
+    <div>✔️ Wynik: ${d.raport.wynik}</div>
+    <div>📝 Uwagi: ${d.raport.uwagi}</div>
+    <div>🕒 Data raportu: ${new Date(d.raport.raportowano.toDate()).toLocaleString("pl-PL")}</div>
+  ` : ""}
+`;
+
         `;
         container.appendChild(div);
       });
