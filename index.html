@@ -15,12 +15,21 @@
     }
     header img { height: 40px; }
     main {
-      max-width: 400px; margin: auto; padding: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 10px;
-      margin-top: 40px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+
+form {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
     input {
       display: block; width: 100%; padding: 10px; margin-bottom: 15px;
       font-size: 16px; border-radius: 8px; border: 1px solid #ccc;
@@ -36,12 +45,15 @@
 </head>
 <body>
 
-  <main>
+<main>
+  <form onsubmit="event.preventDefault(); zaloguj();">
     <input type="text" id="login" placeholder="Numer użytkownika (np. agent002)" required />
-    <input type="password" id="kod" placeholder="Haslo" required />
-    <button onclick="zaloguj()">Zaloguj</button>
+    <input type="password" id="kod" placeholder="Hasło" required />
+    <button type="submit">Zaloguj</button>
     <p id="komunikat" class="error"></p>
-  </main>
+  </form>
+</main>
+
 
   <script>
     const firebaseConfig = {
