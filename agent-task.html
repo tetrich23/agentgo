@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel agenta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { background: #f8f6ec; font-family: Arial, sans-serif; margin: 0; }
+    header {
+      background-color: #1e3615;
+      color: white;
+      padding: 15px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+    }
+    main { padding: 20px; }
+    .section-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+    .task {
+      background: white;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    button {
+      background-color: #336633;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      width: 90%;
+      max-width: 400px;
+    }
+    label { display: block; margin-top: 10px; }
+    textarea, select, input[type="date"] {
+      width: 100%;
+      padding: 5px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>Zalogowany jako: <span id="user"></span></div>
+    <button onclick="zmienAgenta()">Zmień agenta</button>
+  </header>
+  <main>
+    <div class="section-title">Dostępne zgłoszenia</div>
+    <div id="dostepne"></div>
+
+    <div class="section-title">Moje aktualne zgłoszenia</div>
+    <div id="aktualne"></div>
+
+    <div class="section-title">Moje zrealizowane zgłoszenia</div>
+    <div id="zrealizowane"></div>
+  </main>
+
+  <div class="modal" id="formularzModal">
+    <div class="modal-content">
+      <h3>Raport ze zgłoszenia</h3>
+      <form id="formularzRaport">
+        <label>Umowa podpisana:</label>
+        <select id="umowa">
+          <option value="tak">Tak</option>
+          <option value="nie">Nie</option>
+          <option value="inne">Inne</option>
+        </select>
+
+        <label>Komentarz:</label>
+        <textarea id="komentarz"></textarea>
+
+        <label>Data wizyty:</label>
+        <input type="date" id="dataWizyty" required />
+
+        <button type="submit">Zapisz</button>
+        <button type="button" onclick="zamknijFormularz()">Anuluj</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = { /* <- Uzupełnij swoimi danymi Firebase */ };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const user = localStorage.getItem("user");
+    document.getElementById("user").textContent = user;
+
+    const modal = document.getElementById("formularzModal");
+    let selectedTaskId = null;
+
+    function zamknijFormularz() {
+      modal.style.display = "none";
+      selectedTaskId = null;
+    }
+
+    document.getElementById("formularzRaport").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const umowa = document.getElementById("umowa").value;
+      const komentarz = document.getElementById("komentarz").value;
+      const data = document.getElementById("dataWizyty").value;
+      if (selectedTaskId) {
+        await db.collection("tasks").doc(selectedTaskId).update({
+          umowa,
+          komentarz,
+          status: "Zrealizowane",
+          zakonczono: new Date(`${data}T12:00:00`).toISOString()
+        });
+        loadTasks();
+        zamknijFormularz();
+      }
+    });
+
+    async function przejmij(id) {
+      await db.collection("tasks").doc(id).update({
+        status: "W trakcie",
+        agent: user
+      });
+      loadTasks();
+    }
+
+    function otworzFormularz(id) {
+      selectedTaskId = id;
+      modal.style.display = "flex";
+    }
+
+    async function loadTasks() {
+      const snapshot = await db.collection("tasks").get();
+      const dostepne = document.getElementById("dostepne");
+      const aktualne = document.getElementById("aktualne");
+      const zrealizowane = document.getElementById("zrealizowane");
+      dostepne.innerHTML = aktualne.innerHTML = zrealizowane.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const t = doc.data();
+        const div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `<b>${t.ulica || "-"}, ${t.kod || ""} ${t.miasto || ""}</b><br />
+          👤 ${t.name}, tel: ${t.phone}<br />`;
+
+        if (t.status === "Nowe") {
+          const btn = document.createElement("button");
+          btn.innerText = "Przejmuję";
+          btn.onclick = () => przejmij(doc.id);
+          div.appendChild(btn);
+          dostepne.appendChild(div);
+        } else if (t.status === "W trakcie" && t.agent === user) {
+          const btn = document.createElement("button");
+          btn.innerText = "Uzupełnij raport";
+          btn.onclick = () => otworzFormularz(doc.id);
+          div.appendChild(btn);
+          aktualne.appendChild(div);
+        } else if (t.status === "Zrealizowane" && t.agent === user) {
+          div.innerHTML += `
+            🔑 Agent: ${t.agent}<br />
+            ✅ Umowa: ${t.umowa}<br />
+            💬 ${t.komentarz}<br />
+            🗓 ${new Date(t.zakonczono).toLocaleString()}
+          `;
+          zrealizowane.appendChild(div);
+        }
+      });
+    }
+
+    function zmienAgenta() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    loadTasks();
+  </script>
+</body>
+</html>
