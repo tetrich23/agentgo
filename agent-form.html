@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Agent – NASZ PRĄD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial; background-color: #f8f6ec; margin: 0; }
+    header { background-color: #1e3615; color: white; padding: 20px; text-align: center; }
+    main { padding: 20px; max-width: 800px; margin: auto; }
+    .task { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 0 4px rgba(0,0,0,0.1); }
+    button { padding: 10px 16px; background-color: #336633; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    #reportBox {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 400px;
+      margin: 20px auto;
+      display: none;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <header>
+    <h2>Panel agenta</h2>
+  </header>
+  <main>
+    <h3>Dostępne zgłoszenia</h3>
+    <div id="taskList"></div>
+  </main>
+
+  <div id="reportBox">
+    <h3>Dodaj raport</h3>
+    <label>Status umowy:</label>
+    <select id="status">
+      <option value="tak">Tak</option>
+      <option value="nie">Nie</option>
+      <option value="inne">Inne</option>
+    </select>
+    <label>Komentarz:</label>
+    <textarea id="komentarz" rows="4"></textarea>
+    <button onclick="zapiszRaport()">Zapisz</button>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBIwz2juFmcNOVorEywVj8U040GgT3euVQ",
+      authDomain: "mesi-a81c4.firebaseapp.com",
+      projectId: "mesi-a81c4",
+      storageBucket: "mesi-a81c4.appspot.com",
+      messagingSenderId: "291235707667",
+      appId: "1:291235707667:web:66d7f1e079321c5306f8e6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const user = localStorage.getItem("user");
+    let selectedTaskId = null;
+
+    async function loadTasks() {
+      const snapshot = await db.collection("tasks").where("agent", "==", null).get();
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `
+          <b>${data.miasto}, ${data.ulica} ${data.kodPocztowy}</b><br>
+          Klient: ${data.klient}, tel: ${data.telefon} <br>
+          <button onclick="pokazFormularz('${doc.id}')">Przejmuję</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function pokazFormularz(id) {
+      selectedTaskId = id;
+      document.getElementById("reportBox").style.display = "block";
+    }
+
+    async function zapiszRaport() {
+      const status = document.getElementById("status").value;
+      const komentarz = document.getElementById("komentarz").value;
+
+      await db.collection("tasks").doc(selectedTaskId).update({
+        agent: user,
+        status: status,
+        komentarz: komentarz,
+        zrealizowano: false
+      });
+
+      document.getElementById("reportBox").style.display = "none";
+      loadTasks();
+    }
+
+    loadTasks();
+  </script>
+</body>
+</html>
