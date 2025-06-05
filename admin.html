@@ -133,6 +133,7 @@ csv += [
   d.raport?.raportowano ? new Date(d.raport.raportowano.toDate()).toLocaleString("pl-PL") : ""
 ].map(v => `"${(v || "").toString().replace(/"/g, '""')}"`).join(",") + "\n";
 
+
       });
 
       const blob = new Blob([csv], { type: "text/csv" });
