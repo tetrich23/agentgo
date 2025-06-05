@@ -96,12 +96,16 @@ form {
         localStorage.setItem("user", login);
         localStorage.setItem("rola", data.rola);
 
-        if (data.rola === "agent") {
-          window.location.href = "agent.html";
-        } else if (data.rola === "callcenter") {
-          window.location.href = "callcenter.html";
-        } else {
-          komunikat.textContent = "Nieznana rola.";
+if (data.rola === "agent") {
+  window.location.href = "agent.html";
+} else if (data.rola === "callcenter") {
+  window.location.href = "callcenter.html";
+} else if (data.rola === "admin") {
+  window.location.href = "admin.html";
+} else {
+  komunikat.textContent = "Nieznana rola.";
+}
+
         }
       } catch (error) {
         komunikat.textContent = "Błąd logowania.";
