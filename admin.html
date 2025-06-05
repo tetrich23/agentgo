@@ -135,8 +135,8 @@
           d.status, d.raport?.wynik, d.raport?.uwagi, d.data,
           d.przejeto ? new Date(d.przejeto.toDate()).toLocaleString("pl-PL") : "",
           d.raport?.raportowano ? new Date(d.raport.raportowano.toDate()).toLocaleString("pl-PL") : ""
-        ].map(v => `"${(v || "").toString().replace(/"/g, '""')}"`).join(",") + "\n";
-      });
+          ].map(v => `"\${(v || "").toString().replace(/"/g, '""')}"`).join(",") + "\n";
+          });
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
