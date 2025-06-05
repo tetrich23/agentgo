@@ -151,7 +151,7 @@
       const login = document.getElementById("nowyLogin").value.trim();
       const rola = document.getElementById("nowaRola").value;
       const kod = document.getElementById("nowyKod").value.trim();
-      if (!login || kod.length !== 4) return alert("Błąd danych");
+      if (!login || !kod) return alert("Błąd danych");
       await db.collection("users").doc(login).set({ rola, kod });
       alert("Użytkownik dodany");
       ladujUzytkownikow();
